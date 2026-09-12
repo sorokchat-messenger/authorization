@@ -63,6 +63,10 @@ export class UserModel {
     return this._displayName;
   }
 
+  public get hashedPassword(): string {
+    return this._password;
+  }
+
   public set displayName(value: string) {
     this._displayName = value;
   }
@@ -77,6 +81,10 @@ export class UserModel {
 
   public get isAdmin(): boolean {
     return UserModel.HIERARCHY.hasRole(Role.ADMIN, this._role);
+  }
+
+  public get role(): Role {
+    return this._role;
   }
 
   public set role(role: Role) {
@@ -98,5 +106,15 @@ export class UserModel {
       displayName || login,
       Role.USER,
     );
+  }
+
+  public static fromStorage(
+    id: number,
+    login: string,
+    password: string,
+    displayName: string,
+    role: Role,
+  ): UserModel {
+    return new UserModel(id, login, password, displayName, role);
   }
 }

@@ -36,6 +36,7 @@ describe("User model tests", () => {
     expect(
       user.verifyPassword(signing, secret, "password"),
     ).resolves.toBeTruthy();
+    expect(user.hashedPassword).toBe(`${secret}:password`);
     expect(user.displayName).toBe("andrey");
     expect(user.isUser).toBeTruthy();
     expect(user.isPro).toBeFalsy();
@@ -55,7 +56,9 @@ describe("User model tests", () => {
     expect(
       user.verifyPassword(signing, secret, "password"),
     ).resolves.toBeTruthy();
+    expect(user.hashedPassword).toBe(`${secret}:password`);
     expect(user.displayName).toBe("Сороковський Андрій");
+    expect(user.role).toBe(Role.USER);
     expect(user.isUser).toBeTruthy();
     expect(user.isPro).toBeFalsy();
     expect(user.isAdmin).toBeFalsy();
@@ -83,5 +86,20 @@ describe("User model tests", () => {
     expect(
       baseUser.verifyPassword(signing, secret, "new"),
     ).resolves.toBeTruthy();
+  });
+
+  it("should correct getting from storage", () => {
+    const user = UserModel.fromStorage(
+      1,
+      "sorokovsky_andrey",
+      "password",
+      "sorokovsky_andrey",
+      Role.USER,
+    );
+    expect(user.id).toBe(1);
+    expect(user.login).toBe("sorokovsky_andrey");
+    expect(user.hashedPassword).toBe("password");
+    expect(user.displayName).toBe("sorokovsky_andrey");
+    expect(user.role).toBe(Role.USER);
   });
 });
