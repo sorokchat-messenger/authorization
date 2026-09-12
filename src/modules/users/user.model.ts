@@ -1,0 +1,90 @@
+import { Role } from "@sorokchat-messenger/contracts";
+import { ISigning } from "@sorokchat-messenger/cryptography-abstractions";
+import { roleHierarchy } from "../../utils/index.js";
+
+export class UserModel {
+  private readonly _id: number | null;
+  private _login: string;
+  private _password: string;
+  private _displayName: string;
+  private readonly _role: Role;
+
+  private constructor(
+    id: number | null,
+    login: string,
+    password: string,
+    displayName: string,
+    role: Role,
+  ) {
+    this._id = id;
+    this._login = login;
+    this._password = password;
+    this._displayName = displayName;
+    this._role = role;
+  }
+
+  public get id(): number {
+    return this._id ?? 0;
+  }
+
+  public get login(): string {
+    return this._login;
+  }
+
+  public set login(value: string) {
+    this._login = value;
+  }
+
+  public async verifyPassword(
+    service: ISigning,
+    secret: string,
+    password: string,
+  ): Promise<boolean> {
+    return await service.verify(password, this._password, secret);
+  }
+
+  public async changePassword(
+    service: ISigning,
+    secret: string,
+    password: string,
+  ): Promise<void> {
+    this._password = await service.sign(password, secret);
+  }
+
+  public get displayName(): string {
+    return this._displayName;
+  }
+
+  public set displayName(value: string) {
+    this._displayName = value;
+  }
+
+  public get isUser(): boolean {
+    return roleHierarchy.hasRole(Role.USER, this._role);
+  }
+
+  public get isPro(): boolean {
+    return roleHierarchy.hasRole(Role.PRO, this._role);
+  }
+
+  public get isAdmin(): boolean {
+    return roleHierarchy.hasRole(Role.ADMIN, this._role);
+  }
+
+  public static async create(
+    login: string,
+    password: string,
+    signingService: ISigning,
+    secret: string,
+    displayName?: string,
+  ): Promise<UserModel> {
+    const signedPassword: string = await signingService.sign(password, secret);
+    return new UserModel(
+      null,
+      login,
+      signedPassword,
+      displayName || login,
+      Role.USER,
+    );
+  }
+}
