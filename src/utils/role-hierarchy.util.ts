@@ -46,11 +46,3 @@ export class RoleHierarchy {
     return `${current}:${needed}`;
   }
 }
-
-export const roleHierarchy = new RoleHierarchy(
-  new Map<string, string[]>([
-    [Role.USER, []],
-    [Role.PRO, [Role.USER]],
-    [Role.ADMIN, [Role.PRO]],
-  ]),
-);

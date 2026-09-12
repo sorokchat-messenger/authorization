@@ -1,13 +1,21 @@
 import { Role } from "@sorokchat-messenger/contracts";
 import { ISigning } from "@sorokchat-messenger/cryptography-abstractions";
-import { roleHierarchy } from "../../utils/index.js";
+import { RoleHierarchy } from "../../utils/index.js";
 
 export class UserModel {
+  private static readonly HIERARCHY = new RoleHierarchy(
+    new Map<string, string[]>([
+      [Role.USER, []],
+      [Role.PRO, [Role.USER]],
+      [Role.ADMIN, [Role.PRO]],
+    ]),
+  );
+
   private readonly _id: number | null;
   private _login: string;
   private _password: string;
   private _displayName: string;
-  private readonly _role: Role;
+  private _role: Role;
 
   private constructor(
     id: number | null,
@@ -60,15 +68,19 @@ export class UserModel {
   }
 
   public get isUser(): boolean {
-    return roleHierarchy.hasRole(Role.USER, this._role);
+    return UserModel.HIERARCHY.hasRole(Role.USER, this._role);
   }
 
   public get isPro(): boolean {
-    return roleHierarchy.hasRole(Role.PRO, this._role);
+    return UserModel.HIERARCHY.hasRole(Role.PRO, this._role);
   }
 
   public get isAdmin(): boolean {
-    return roleHierarchy.hasRole(Role.ADMIN, this._role);
+    return UserModel.HIERARCHY.hasRole(Role.ADMIN, this._role);
+  }
+
+  public set role(role: Role) {
+    this._role = role;
   }
 
   public static async create(
