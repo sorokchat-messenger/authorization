@@ -6,7 +6,7 @@ import {
 } from "../../src/modules/users/users.repository.interface.js";
 
 class UsersRepository implements IUsersRepository {
-  private readonly users: UserModel[];
+  private users: UserModel[];
 
   public constructor() {
     this.users = [];
@@ -40,7 +40,7 @@ class UsersRepository implements IUsersRepository {
   }
 
   public async delete(id: number): Promise<void> {
-    this.users.filter((user) => user.id !== id);
+    this.users = this.users.filter((user) => user.id !== id);
   }
 }
 

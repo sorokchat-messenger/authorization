@@ -36,4 +36,36 @@ export class UsersService {
     );
     return await this.repository.save(user);
   }
+
+  public async getById(id: number): Promise<UserModel> {
+    const user = await this.repository.getById(id);
+    if (user === null) {
+      throw new GrpcException(UserCodes.NOT_FOUND, GrpcStatus.NOT_FOUND);
+    } else {
+      return user;
+    }
+  }
+
+  public async getByLogin(login: string): Promise<UserModel> {
+    const user = await this.repository.getByLogin(login);
+    if (user === null) {
+      throw new GrpcException(UserCodes.NOT_FOUND, GrpcStatus.NOT_FOUND);
+    } else {
+      return user;
+    }
+  }
+
+  public async update(user: UserModel): Promise<UserModel> {
+    const candidate = await this.getByLogin(user.login);
+    if (candidate !== null && user.id !== candidate.id) {
+      throw new GrpcException(UserCodes.EXISTS, GrpcStatus.ALREADY_EXISTS);
+    } else {
+      return await this.repository.save(user);
+    }
+  }
+
+  public async delete(id: number): Promise<void> {
+    const user = await this.getById(id);
+    return await this.repository.delete(user.id);
+  }
 }
