@@ -6,7 +6,6 @@ import {
   DatabaseModule,
   getConfigOptions,
 } from "../infrastructure/index.js";
-import { UsersModule } from "./users/users.module.js";
 
 @Module({
   imports: [
@@ -14,7 +13,6 @@ import { UsersModule } from "./users/users.module.js";
     CryptographyModule,
     DatabaseModule,
     AuthorizationModule,
-    UsersModule,
   ],
 })
 export class AppModule {}
