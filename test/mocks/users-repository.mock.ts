@@ -35,6 +35,10 @@ class UsersRepository implements IUsersRepository {
     return this.users.find((user) => user.id === id) || null;
   }
 
+  public async getByLogin(login: string): Promise<UserModel | null> {
+    return this.users.find((user) => user.login === login) || null;
+  }
+
   public async delete(id: number): Promise<void> {
     this.users.filter((user) => user.id !== id);
   }

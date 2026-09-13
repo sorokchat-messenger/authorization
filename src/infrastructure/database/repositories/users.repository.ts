@@ -27,6 +27,12 @@ export class UsersRepository implements IUsersRepository {
     return this.toModel(user);
   }
 
+  public async getByLogin(login: string): Promise<UserModel | null> {
+    const user = await this.repository.findOneBy({ login });
+    if (user === null) return null;
+    return this.toModel(user);
+  }
+
   public async delete(id: number): Promise<void> {
     await this.repository.delete({ id });
   }

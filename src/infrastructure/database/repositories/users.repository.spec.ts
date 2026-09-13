@@ -30,8 +30,13 @@ const repositoryMock = {
     }
   }),
   findOneBy: vi.fn(
-    async ({ id }: DeepPartial<UserEntity>): Promise<UserEntity | null> => {
-      return users.find((user) => user.id === id) || null;
+    async ({
+      id,
+      login,
+    }: DeepPartial<UserEntity>): Promise<UserEntity | null> => {
+      return (
+        users.find((user) => user.id === id || user.login === login) || null
+      );
     },
   ),
   delete: vi.fn(async ({ id }: DeepPartial<UserEntity>): Promise<void> => {
@@ -101,7 +106,7 @@ describe("UsersRepository", () => {
     expect(result).toStrictEqual(updatedUser);
   });
 
-  it("should success return user if existed", async () => {
+  it("should success return user by id if existed", async () => {
     const user = await UserModel.create(
       "andrey",
       "password",
@@ -113,8 +118,25 @@ describe("UsersRepository", () => {
     expect(result).toStrictEqual(expected);
   });
 
-  it("should success return null if not existed", async () => {
+  it("should success return null by id if not existed", async () => {
     const result = await repository.getById(1);
+    expect(result).toBeNull();
+  });
+
+  it("should success return user by login if existed", async () => {
+    const user = await UserModel.create(
+      "andrey",
+      "password",
+      signingService,
+      secret,
+    );
+    const expected = await repository.save(user);
+    const result = await repository.getByLogin("andrey");
+    expect(result).toStrictEqual(expected);
+  });
+
+  it("should success return null by id login not existed", async () => {
+    const result = await repository.getByLogin("andrey");
     expect(result).toBeNull();
   });
 
