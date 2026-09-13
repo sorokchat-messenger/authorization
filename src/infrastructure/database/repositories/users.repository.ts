@@ -1,11 +1,15 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Provider } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserEntity } from "../entities/index.js";
 import { Repository } from "typeorm";
 import { UserModel } from "../../../modules/users/user.model.js";
+import {
+  IUsersRepository,
+  USERS_REPOSITORY_TOKEN,
+} from "../../../modules/users/users.repository.interface.js";
 
 @Injectable()
-export class UsersRepository {
+export class UsersRepository implements IUsersRepository {
   public constructor(
     @InjectRepository(UserEntity)
     private readonly repository: Repository<UserEntity>,
@@ -47,3 +51,8 @@ export class UsersRepository {
     );
   }
 }
+
+export const USERS_REPOSITORY_PROVIDER: Provider<IUsersRepository> = {
+  provide: USERS_REPOSITORY_TOKEN,
+  useClass: UsersRepository,
+};

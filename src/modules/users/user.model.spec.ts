@@ -1,22 +1,28 @@
 import { ISigning } from "@sorokchat-messenger/cryptography-abstractions";
 import { UserModel } from "./user.model.js";
 import { Role } from "@sorokchat-messenger/contracts";
-
-const createSigningMock = (): ISigning => ({
-  sign: vi.fn(async (value: string, secret: string) => `${secret}:${value}`),
-  verify: vi.fn(
-    async (value: string, hash: string, secret: string) =>
-      hash === `${secret}:${value}`,
-  ),
-});
+import { Test, TestingModule } from "@nestjs/testing";
+import {
+  PASSWORD_SECRET_TOKEN,
+  SIGNING_TOKEN,
+} from "../../infrastructure/index.js";
+import {
+  MOCK_PASSWORD_SECRET_PROVIDER,
+  MOCK_SIGNING_PROVIDER,
+} from "../../../test/index.js";
 
 describe("User model tests", () => {
   let signing: ISigning;
-  let secret: string = "secret";
+  let secret: string;
   let baseUser: UserModel;
 
-  beforeAll(() => {
-    signing = createSigningMock();
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [MOCK_SIGNING_PROVIDER, MOCK_PASSWORD_SECRET_PROVIDER],
+    }).compile();
+
+    signing = module.get<ISigning>(SIGNING_TOKEN);
+    secret = module.get<string>(PASSWORD_SECRET_TOKEN);
   });
 
   beforeEach(async () => {
@@ -36,7 +42,7 @@ describe("User model tests", () => {
     expect(
       user.verifyPassword(signing, secret, "password"),
     ).resolves.toBeTruthy();
-    expect(user.hashedPassword).toBe(`${secret}:password`);
+    expect(user.hashedPassword).toBe(`password:${secret}`);
     expect(user.displayName).toBe("andrey");
     expect(user.isUser).toBeTruthy();
     expect(user.isPro).toBeFalsy();
@@ -56,7 +62,7 @@ describe("User model tests", () => {
     expect(
       user.verifyPassword(signing, secret, "password"),
     ).resolves.toBeTruthy();
-    expect(user.hashedPassword).toBe(`${secret}:password`);
+    expect(user.hashedPassword).toBe(`password:${secret}`);
     expect(user.displayName).toBe("Сороковський Андрій");
     expect(user.role).toBe(Role.USER);
     expect(user.isUser).toBeTruthy();
