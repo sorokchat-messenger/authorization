@@ -6,16 +6,37 @@ import {
 } from "../../src/modules/users/users.repository.interface.js";
 
 class UsersRepository implements IUsersRepository {
+  private readonly users: UserModel[];
+
+  public constructor() {
+    this.users = [];
+  }
+
   public async save(user: UserModel): Promise<UserModel> {
-    throw new Error("Method not implemented.");
+    const index = this.users.findIndex((candidate) => candidate.id === user.id);
+    if (index >= 0) {
+      this.users[index] = user;
+      return this.users[index];
+    } else {
+      this.users.push(
+        UserModel.fromStorage(
+          this.users.length + 1,
+          user.login,
+          user.hashedPassword,
+          user.displayName,
+          user.role,
+        ),
+      );
+      return this.users[this.users.length - 1];
+    }
   }
 
   public async getById(id: number): Promise<UserModel | null> {
-    throw new Error("Method not implemented.");
+    return this.users.find((user) => user.id === id) || null;
   }
 
   public async delete(id: number): Promise<void> {
-    throw new Error("Method not implemented.");
+    this.users.filter((user) => user.id !== id);
   }
 }
 

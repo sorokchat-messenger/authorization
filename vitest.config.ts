@@ -9,5 +9,20 @@ export default defineConfig({
     globals: true,
     root: "./",
     include: ["**/*.spec.ts"],
+    coverage: {
+      exclude: [
+        "test/**",
+        "src/**/*.spec.ts",
+        "src/**/*.options.ts",
+        "src/**/*.schema.ts",
+        "src/**/*.env.ts",
+        "src/**/*.module.ts",
+        "src/**/*.interface.ts",
+        "src/**/*.provider.ts",
+        "src/**/index.ts",
+        "node_modules/**",
+        "dist/**",
+      ],
+    },
   },
 });
