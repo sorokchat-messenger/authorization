@@ -5,7 +5,7 @@ import {
   type ProfileResponse,
   type RefreshTokensRequest,
   type RefreshTokensResponse,
-  Role,
+  type Role,
   type LoginRequest,
   type LoginResponse,
   type RegisterRequest,
@@ -68,13 +68,17 @@ export class AuthorizationService {
   public async profile({
     accessToken,
   }: ProfileRequest): Promise<ProfileResponse> {
-    const user = await this.usersService.getByLogin(accessToken);
-    return {
-      login: user.login,
-      password: user.hashedPassword,
-      role: user.role as Role,
-      displayName: user.displayName,
-    };
+    try {
+      const user = await this.usersService.getByLogin(accessToken);
+      return {
+        login: user.login,
+        password: user.hashedPassword,
+        role: user.role as Role,
+        displayName: user.displayName,
+      };
+    } catch (error) {
+      throw this.validateError(error);
+    }
   }
 
   private async authorize(
