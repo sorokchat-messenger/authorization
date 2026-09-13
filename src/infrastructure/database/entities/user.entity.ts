@@ -1,4 +1,4 @@
-import { Role } from "@sorokchat-messenger/contracts";
+import { type Role } from "@sorokchat-messenger/contracts";
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "users" })
@@ -15,6 +15,6 @@ export class UserEntity {
   @Column({ nullable: false, type: "varchar" })
   public displayName: string;
 
-  @Column({ nullable: false, default: Role.USER, enum: Role, type: "varchar" })
+  @Column({ nullable: false, type: "varchar" })
   public role: Role;
 }
