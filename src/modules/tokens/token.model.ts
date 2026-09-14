@@ -2,12 +2,7 @@ import { Logger } from "@nestjs/common";
 import { GrpcException } from "@nestjs/microservices";
 import { AuthorizationCodes } from "@sorokchat-messenger/contracts";
 import { GrpcStatus } from "@sorokchat-messenger/microservices";
-import {
-  JsonWebTokenError,
-  sign,
-  TokenExpiredError,
-  verify,
-} from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import z from "zod";
 
 const TokenSchema = z
@@ -73,7 +68,7 @@ export class TokenModel {
       );
     };
     try {
-      const decoded = verify(token, secret);
+      const decoded = jwt.verify(token, secret);
       if (typeof decoded === "string") {
         throw invalidToken();
       }
@@ -88,10 +83,10 @@ export class TokenModel {
       );
       return model;
     } catch (error) {
-      if (error instanceof TokenExpiredError) {
+      if (error instanceof jwt.TokenExpiredError) {
         throw invalidToken();
       }
-      if (error instanceof JsonWebTokenError) {
+      if (error instanceof jwt.JsonWebTokenError) {
         TokenModel.LOGGER.warn(`Invalid token: ${error.message}`);
         throw invalidToken();
       }
@@ -124,7 +119,7 @@ export class TokenModel {
   }
 
   public serialize(secret: string): string {
-    return sign(
+    return jwt.sign(
       {
         sub: this._subject,
         iat: Math.floor(this._issuedAt.getTime() / 1000),
