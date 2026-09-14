@@ -1,3 +1,13 @@
+import { Logger } from "@nestjs/common";
+import { GrpcException } from "@nestjs/microservices";
+import { AuthorizationCodes } from "@sorokchat-messenger/contracts";
+import { GrpcStatus } from "@sorokchat-messenger/microservices";
+import {
+  JsonWebTokenError,
+  sign,
+  TokenExpiredError,
+  verify,
+} from "jsonwebtoken";
 import z from "zod";
 
 const TokenSchema = z
@@ -20,6 +30,8 @@ const TokenSchema = z
   });
 
 export class TokenModel {
+  private static readonly LOGGER: Logger = new Logger(TokenModel.name);
+
   private readonly _subject: string;
   private readonly _issuedAt: Date;
   private readonly _expiredAt: Date;
@@ -53,6 +65,42 @@ export class TokenModel {
     );
   }
 
+  public static parse(token: string, secret: string): TokenModel {
+    const invalidToken = (): GrpcException => {
+      return new GrpcException(
+        AuthorizationCodes.BAD_CREDENTIALS,
+        GrpcStatus.UNAUTHENTICATED,
+      );
+    };
+    try {
+      const decoded = verify(token, secret);
+      if (typeof decoded === "string") {
+        throw invalidToken();
+      }
+      const { iat, exp, sub } = decoded;
+      if (typeof sub !== "string") throw invalidToken();
+      if (typeof iat !== "number") throw invalidToken();
+      if (typeof exp !== "number") throw invalidToken();
+      const model = TokenModel.of(
+        sub,
+        new Date(iat * 1000),
+        new Date(exp * 1000),
+      );
+      return model;
+    } catch (error) {
+      if (error instanceof TokenExpiredError) {
+        throw invalidToken();
+      }
+      if (error instanceof JsonWebTokenError) {
+        TokenModel.LOGGER.warn(`Invalid token: ${error.message}`);
+        throw invalidToken();
+      }
+      if (error instanceof GrpcException) throw error;
+      TokenModel.LOGGER.error(error);
+      throw invalidToken();
+    }
+  }
+
   public get subject(): string {
     return this._subject;
   }
@@ -72,6 +120,17 @@ export class TokenModel {
   public get lifetimeSeconds(): number {
     return Math.floor(
       (this._expiredAt.getTime() - this._issuedAt.getTime()) / 1000,
+    );
+  }
+
+  public serialize(secret: string): string {
+    return sign(
+      {
+        sub: this._subject,
+        iat: Math.floor(this._issuedAt.getTime() / 1000),
+        exp: Math.floor(this._expiredAt.getTime() / 1000),
+      },
+      secret,
     );
   }
 }

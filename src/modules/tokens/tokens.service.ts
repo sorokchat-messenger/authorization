@@ -8,7 +8,6 @@ import type {
   RefreshTokensResponse,
   RegisterResponse,
 } from "@sorokchat-messenger/microservices";
-import { sign } from "jsonwebtoken";
 
 @Injectable()
 export class TokensService {
@@ -22,14 +21,8 @@ export class TokensService {
     const refreshToken = this.generateRefreshToken(user);
     const acccessToken = this.generateAccessToken(user);
     return {
-      accessToken: this.serialize(
-        acccessToken,
-        this.tokensOptions.access.secret,
-      ),
-      refreshToken: this.serialize(
-        refreshToken,
-        this.tokensOptions.refresh.secret,
-      ),
+      accessToken: acccessToken.serialize(this.tokensOptions.access.secret),
+      refreshToken: refreshToken.serialize(this.tokensOptions.refresh.secret),
     };
   }
 
@@ -44,17 +37,5 @@ export class TokensService {
   private generateToken(user: UserModel, duration: number): TokenModel {
     const now = new Date();
     return TokenModel.of(user.login, now, new Date(now.getTime() + duration));
-  }
-
-  private serialize(token: TokenModel, secret: string): string {
-    return sign(
-      {
-        sub: token.subject,
-        iat: Math.floor(token.issuedAt.getTime() / 1000),
-        exp: Math.floor(token.expiredAt.getTime() / 1000),
-      },
-      secret,
-      { noTimestamp: true },
-    );
   }
 }
