@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: sorokchat.authorization
-    env_file: .env.docker
+    env_file: .env.production.local
     networks:
       - sorokchat
     restart: unless-stopped
