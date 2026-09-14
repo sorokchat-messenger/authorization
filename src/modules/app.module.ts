@@ -6,6 +6,7 @@ import {
   DatabaseModule,
   getConfigOptions,
 } from "../infrastructure/index.js";
+import { TokensModule } from "./tokens/tokens.module.js";
 
 @Module({
   imports: [
