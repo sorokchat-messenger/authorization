@@ -11,7 +11,7 @@
         "@nestjs/config": "^12.0.0",
         "@nestjs/core": "^12.0.1",
         "@nestjs/microservices": "^12.0.1",
-        "@sorokchat-messenger/config": "^1.0.2",
+        "@sorokchat-messenger/config": "^1.0.5",
         "@sorokchat-messenger/contracts": "^1.0.4",
         "@sorokchat-messenger/cryptography-abstractions": "^1.0.2",
         "@sorokchat-messenger/cryptography-node": "^1.0.1",
@@ -227,7 +227,7 @@
 
     "@sindresorhus/is": ["@sindresorhus/is@4.6.0", "", {}, "sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw=="],
 
-    "@sorokchat-messenger/config": ["@sorokchat-messenger/config@1.0.2", "", { "dependencies": { "@nestjs/config": "^12.0.0" }, "peerDependencies": { "vitest": "^5.0.0", "zod": "^4.6.2" } }, "sha512-iw81JhNm9qtht87qB6BhTa3HCHSwuxPCsO4h52AFc8WkjaiO/PqgKCuW5VRAuzvOy7cZPuE4uEP/wFme4A1Bog=="],
+    "@sorokchat-messenger/config": ["@sorokchat-messenger/config@1.0.5", "", { "dependencies": { "@nestjs/config": "^12.0.0" }, "peerDependencies": { "vitest": "^5.0.0", "zod": "^4.6.2" } }, "sha512-VFAfHtLmrpSKk0HdK8blB1Kfl16S50zNEkcEzB/jPPuH6TmtIllosZVsnws5nbK+mAvCp/XIwvLzAP22asHOTQ=="],
 
     "@sorokchat-messenger/contracts": ["@sorokchat-messenger/contracts@1.0.4", "", { "dependencies": { "reflect-metadata": "^0.2.2", "zod": "^4.5.4" } }, "sha512-bRLAaMPib0VBUK5z+pdMOvClYdvV3F03p3DPUHMxJHIwh4BeXbolPYCMkn+88kFzvrmDImxhnv9MWIl5Zrdqvg=="],
 
