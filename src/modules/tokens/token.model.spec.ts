@@ -20,6 +20,7 @@ describe("TokenModel", () => {
     const now: Date = new Date();
     const lifetimeSeconds: number = 1;
     const expiredAt: Date = new Date(now.getTime() + lifetimeSeconds * 1000);
+    const secret: string = "secret";
     const token = TokenModel.of(subject, now, expiredAt);
     expect(token.subject).toBe(subject);
     expect(token.issuedAt).toBe(now);

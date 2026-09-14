@@ -35,7 +35,11 @@ export class TokenModel {
     issuedAt: Date,
     expiredAt: Date,
   ): TokenModel {
-    const result = TokenSchema.safeParse({ subject, issuedAt, expiredAt });
+    const result = TokenSchema.safeParse({
+      subject,
+      issuedAt,
+      expiredAt,
+    });
     if (!result.success)
       throw new Error(
         result.error.issues
