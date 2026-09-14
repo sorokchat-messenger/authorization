@@ -1,0 +1,16 @@
+name: sorokchat
+services:
+  authorization:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sorokchat.authorization
+    env_file: .env.docker
+    networks:
+      - sorokchat
+    restart: unless-stopped
+
+networks:
+  sorokchat:
+    name: sorokchat
+  
