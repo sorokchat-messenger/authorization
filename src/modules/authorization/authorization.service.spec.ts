@@ -4,10 +4,12 @@ import { UsersService } from "../users/users.service.js";
 import {
   MOCK_PASSWORD_SECRET_PROVIDER,
   MOCK_SIGNING_PROVIDER,
+  MOCK_TOKENS_OPTIONS_PROVIDER,
   MOCK_USERS_REPOSITORY_PROVIDER,
 } from "../../../test/index.js";
 import {
   GrpcStatus,
+  Role,
   type RegisterResponse,
   type RegisterRequest,
   type LoginRequest,
@@ -15,14 +17,17 @@ import {
   type RefreshTokensResponse,
   type ProfileRequest,
   type ProfileResponse,
-  type Role,
 } from "@sorokchat-messenger/microservices";
 import { GrpcException } from "@nestjs/microservices";
 import { AuthorizationCodes, UserCodes } from "@sorokchat-messenger/contracts";
+import { TokensService } from "../tokens/tokens.service.js";
+import { UserModel } from "../users/user.model.js";
+import { TokenModel } from "../tokens/token.model.js";
 
 describe("AuthorizationService", () => {
   let service: AuthorizationService;
   let usersService: UsersService;
+  let tokensService: TokensService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -31,12 +36,15 @@ describe("AuthorizationService", () => {
         MOCK_PASSWORD_SECRET_PROVIDER,
         MOCK_SIGNING_PROVIDER,
         MOCK_USERS_REPOSITORY_PROVIDER,
+        MOCK_TOKENS_OPTIONS_PROVIDER,
+        TokensService,
         UsersService,
       ],
     }).compile();
 
     service = module.get<AuthorizationService>(AuthorizationService);
     usersService = module.get<UsersService>(UsersService);
+    tokensService = module.get<TokensService>(TokensService);
   });
 
   it("should be defined", () => {
@@ -61,10 +69,14 @@ describe("AuthorizationService", () => {
       login: "andrey",
       password: "password",
     };
-    const expected: RegisterResponse = {
-      accessToken: newUser.login,
-      refreshToken: newUser.login,
-    };
+    const user = UserModel.fromStorage(
+      1,
+      newUser.login,
+      newUser.password,
+      newUser.login,
+      Role.USER,
+    );
+    const expected: RegisterResponse = await tokensService.generateTokens(user);
     expect(service.register(newUser)).resolves.toStrictEqual(expected);
   });
 
@@ -74,10 +86,14 @@ describe("AuthorizationService", () => {
       password: "password",
     };
     await usersService.create(newUser);
-    const expected: RegisterResponse = {
-      accessToken: newUser.login,
-      refreshToken: newUser.login,
-    };
+    const user = UserModel.fromStorage(
+      1,
+      newUser.login,
+      newUser.password,
+      newUser.login,
+      Role.USER,
+    );
+    const expected: RegisterResponse = await tokensService.generateTokens(user);
     expect(service.login(newUser)).resolves.toStrictEqual(expected);
   });
 
@@ -107,9 +123,21 @@ describe("AuthorizationService", () => {
   });
 
   it("should throw exception on refreshToken if user not found", async () => {
-    const refreshTokenRequest: RefreshTokensRequest = {
-      refreshToken: "refresh",
+    const newUser: RegisterRequest = {
+      login: "andrey",
+      password: "password",
     };
+    await usersService.create(newUser);
+    const user = UserModel.fromStorage(
+      1,
+      newUser.login,
+      newUser.password,
+      newUser.login,
+      Role.USER,
+    );
+    user.login = newUser.login + "a";
+    const refreshTokenRequest: RefreshTokensRequest =
+      await tokensService.generateTokens(user);
     const expected = new GrpcException(
       AuthorizationCodes.BAD_CREDENTIALS,
       GrpcStatus.INVALID_ARGUMENT,
@@ -124,22 +152,26 @@ describe("AuthorizationService", () => {
       login: "andrey",
       password: "password",
     };
-    await usersService.create(newUser);
+    const user = await usersService.create(newUser);
     const refreshTokenRequest: RefreshTokensRequest = {
-      refreshToken: newUser.login,
+      refreshToken: (await tokensService.generateTokens(user)).refreshToken,
     };
-    const expected: RefreshTokensResponse = {
-      accessToken: newUser.login,
-      refreshToken: newUser.login,
-    };
+    const expected: RegisterResponse = await tokensService.generateTokens(user);
     expect(service.refreshTokens(refreshTokenRequest)).resolves.toStrictEqual(
       expected,
     );
   });
 
   it("should throw exception on profile if user not found", async () => {
+    const user = UserModel.fromStorage(
+      1,
+      "andrey",
+      "password",
+      "andrey",
+      Role.USER,
+    );
     const profileRequest: ProfileRequest = {
-      accessToken: "access",
+      accessToken: (await tokensService.generateTokens(user)).accessToken,
     };
     const expected = new GrpcException(
       AuthorizationCodes.BAD_CREDENTIALS,
@@ -154,9 +186,8 @@ describe("AuthorizationService", () => {
       password: "password",
     };
     const user = await usersService.create(newUser);
-    const profileRequest: ProfileRequest = {
-      accessToken: user.login,
-    };
+    const profileRequest: ProfileRequest =
+      await tokensService.generateTokens(user);
     const expected: ProfileResponse = {
       login: user.login,
       password: user.hashedPassword,

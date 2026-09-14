@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import {
   GrpcStatus,
   type ProfileRequest,
@@ -18,8 +18,12 @@ import { AuthorizationCodes, UserCodes } from "@sorokchat-messenger/contracts";
 import {
   PASSWORD_SECRET_TOKEN,
   SIGNING_TOKEN,
+  type TokensConfig,
 } from "../../infrastructure/index.js";
 import { type ISigning } from "@sorokchat-messenger/cryptography-abstractions";
+import { TokensService } from "../tokens/tokens.service.js";
+import { TOKENS_OPTIONS_TOKEN } from "../tokens/tokens.options.provider.js";
+import { TokenModel } from "../tokens/token.model.js";
 
 @Injectable()
 export class AuthorizationService {
@@ -28,10 +32,14 @@ export class AuthorizationService {
     GrpcStatus.INVALID_ARGUMENT,
   );
 
+  private readonly logger: Logger = new Logger(AuthorizationService.name);
+
   public constructor(
     private readonly usersService: UsersService,
     @Inject(SIGNING_TOKEN) private readonly signingService: ISigning,
     @Inject(PASSWORD_SECRET_TOKEN) private readonly secret: string,
+    @Inject(TOKENS_OPTIONS_TOKEN) private readonly tokensOptions: TokensConfig,
+    private readonly tokensService: TokensService,
   ) {}
 
   public async register(payload: RegisterRequest): Promise<RegisterResponse> {
@@ -58,7 +66,11 @@ export class AuthorizationService {
     refreshToken,
   }: RefreshTokensRequest): Promise<RefreshTokensResponse> {
     try {
-      const user = await this.usersService.getByLogin(refreshToken);
+      const token = TokenModel.parse(
+        refreshToken,
+        this.tokensOptions.refresh.secret,
+      );
+      const user = await this.usersService.getByLogin(token.subject);
       return await this.authorize(user);
     } catch (error) {
       throw this.validateError(error);
@@ -69,7 +81,11 @@ export class AuthorizationService {
     accessToken,
   }: ProfileRequest): Promise<ProfileResponse> {
     try {
-      const user = await this.usersService.getByLogin(accessToken);
+      const token = TokenModel.parse(
+        accessToken,
+        this.tokensOptions.access.secret,
+      );
+      const user = await this.usersService.getByLogin(token.subject);
       return {
         login: user.login,
         password: user.hashedPassword,
@@ -84,10 +100,7 @@ export class AuthorizationService {
   private async authorize(
     user: UserModel,
   ): Promise<RegisterResponse | LoginResponse | RefreshTokensResponse> {
-    return {
-      accessToken: user.login,
-      refreshToken: user.login,
-    };
+    return await this.tokensService.generateTokens(user);
   }
 
   private validateError(error: unknown): GrpcException | unknown {
@@ -98,6 +111,7 @@ export class AuthorizationService {
     ) {
       return AuthorizationService.EXCEPTION;
     }
+    this.logger.error(`Authorization user error`, error);
     return error;
   }
 }
