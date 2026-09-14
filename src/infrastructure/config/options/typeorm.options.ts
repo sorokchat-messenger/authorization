@@ -1,11 +1,7 @@
 import { ConfigService } from "@nestjs/config";
 import { type AllConfigs } from "../types/index.js";
 import { type TypeOrmModuleOptions } from "@nestjs/typeorm";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const directory = dirname(fileURLToPath(import.meta.url));
-const extension = import.meta.url.endsWith(".ts") ? "ts" : "js";
+import { UserEntity } from "../../database/entities/user.entity.js";
 
 export function getTypeOrmConfig(
   configService: ConfigService<AllConfigs>,
@@ -21,6 +17,6 @@ export function getTypeOrmConfig(
       infer: true,
     }),
     ssl: configService.getOrThrow("database.ssl", { infer: true }),
-    entities: [join(directory, `../**/*.entity.${extension}`)],
+    entities: [UserEntity],
   };
 }
