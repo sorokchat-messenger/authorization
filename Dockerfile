@@ -21,8 +21,7 @@ FROM base AS production-dependencies
 RUN npm install -g bun
 COPY package.json bun.lock* ./
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile --production && \
-    bun pm prune --production
+    bun install --frozen-lockfile --production
 
 FROM node:24.20.0-alpine AS runner
 WORKDIR /application

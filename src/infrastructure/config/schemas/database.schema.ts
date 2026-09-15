@@ -17,12 +17,14 @@ export const DatabaseSchema = z
       .string({ error: "Назва бази даних має бути рядком" })
       .nonempty({ error: "Назва бази даних не може бути порожнім" })
       .nonoptional({ error: "Назва бази даних має бути" }),
-    DATABASE_SYNCHRONIZE: z.coerce.boolean({
+    DATABASE_SYNCHRONIZE: z.enum(["true", "false"], {
       error: "Прапорець синхронізації має бути 'true' чи 'false'",
-    }),
-    DATABASE_SSL: z.coerce.boolean({
-      error: "Прапоречь сертифікату має бути 'true' чи 'false'",
-    }),
+    })
+      .transform((value) => value === "true"),
+    DATABASE_SSL: z.enum(["true", "false"], {
+      error: "Прапорець сертифікату має бути 'true' чи 'false'",
+    })
+      .transform((value) => value === "true"),
   })
   .transform(
     ({
