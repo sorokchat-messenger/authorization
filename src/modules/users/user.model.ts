@@ -1,15 +1,8 @@
-import { Role } from "@sorokchat-messenger/contracts";
+import { Role, ROLE_HIERARCHY } from "@sorokchat-messenger/contracts";
 import { ISigning } from "@sorokchat-messenger/cryptography-abstractions";
-import { RoleHierarchy } from "../../utils/index.js";
 
 export class UserModel {
-  private static readonly HIERARCHY = new RoleHierarchy(
-    new Map<string, string[]>([
-      [Role.USER, []],
-      [Role.PRO, [Role.USER]],
-      [Role.ADMIN, [Role.PRO]],
-    ]),
-  );
+  private static readonly HIERARCHY = ROLE_HIERARCHY;
 
   private readonly _id: number | null;
   private _login: string;

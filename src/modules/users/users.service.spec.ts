@@ -20,7 +20,7 @@ import {
   IUsersRepository,
   USERS_REPOSITORY_TOKEN,
 } from "./users.repository.interface.js";
-import { GrpcException } from "@nestjs/microservices";
+import { createError } from "../../utils/error.factory.js";
 import { GrpcStatus } from "@sorokchat-messenger/microservices";
 
 describe("UsersService", () => {
@@ -98,19 +98,13 @@ describe("UsersService", () => {
       payload.displayName,
       Role.USER,
     );
-    const expected = new GrpcException(
-      UserCodes.EXISTS,
-      GrpcStatus.ALREADY_EXISTS,
-    );
+    const expected = createError(GrpcStatus.ALREADY_EXISTS, UserCodes.EXISTS);
     await repository.save(user);
     expect(service.create(payload)).rejects.toStrictEqual(expected);
   });
 
   it("should throw error when get by id if not found", async () => {
-    const expected = new GrpcException(
-      UserCodes.NOT_FOUND,
-      GrpcStatus.NOT_FOUND,
-    );
+    const expected = createError(GrpcStatus.NOT_FOUND, UserCodes.NOT_FOUND);
     expect(service.getById(1)).rejects.toStrictEqual(expected);
   });
 
@@ -132,10 +126,7 @@ describe("UsersService", () => {
   });
 
   it("should throw error when get by login if not found", async () => {
-    const expected = new GrpcException(
-      UserCodes.NOT_FOUND,
-      GrpcStatus.NOT_FOUND,
-    );
+    const expected = createError(GrpcStatus.NOT_FOUND, UserCodes.NOT_FOUND);
     expect(service.getByLogin("test")).rejects.toStrictEqual(expected);
   });
 
@@ -178,10 +169,7 @@ describe("UsersService", () => {
     await repository.save(firstUser);
     const updatedUser = await repository.save(secondUser);
     updatedUser.login = created.login;
-    const expected = new GrpcException(
-      UserCodes.EXISTS,
-      GrpcStatus.ALREADY_EXISTS,
-    );
+    const expected = createError(GrpcStatus.ALREADY_EXISTS, UserCodes.EXISTS);
     expect(service.update(updatedUser)).rejects.toStrictEqual(expected);
   });
 
@@ -217,19 +205,13 @@ describe("UsersService", () => {
       secret,
     );
     const savedUser = await repository.save(user);
-    const expected = new GrpcException(
-      UserCodes.NOT_FOUND,
-      GrpcStatus.NOT_FOUND,
-    );
+    const expected = createError(GrpcStatus.NOT_FOUND, UserCodes.NOT_FOUND);
     await service.delete(savedUser.id);
     expect(service.getById(savedUser.id)).rejects.toStrictEqual(expected);
   });
 
   it("should throw exception on delete user if not exists", async () => {
-    const expected = new GrpcException(
-      UserCodes.NOT_FOUND,
-      GrpcStatus.NOT_FOUND,
-    );
+    const expected = createError(GrpcStatus.NOT_FOUND, UserCodes.NOT_FOUND);
     expect(service.getById(1)).rejects.toStrictEqual(expected);
   });
 });

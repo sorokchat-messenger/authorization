@@ -30,7 +30,7 @@
     "@nestjs/microservices": "^12.0.1",
     "@nestjs/typeorm": "^12.0.1",
     "@sorokchat-messenger/config": "^1.0.5",
-    "@sorokchat-messenger/contracts": "^1.0.4",
+    "@sorokchat-messenger/contracts": "^1.0.17",
     "@sorokchat-messenger/cryptography-abstractions": "^1.0.2",
     "@sorokchat-messenger/cryptography-node": "^1.0.1",
     "@sorokchat-messenger/microservices": "^1.0.4",

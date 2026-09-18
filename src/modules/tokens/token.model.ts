@@ -1,9 +1,10 @@
 import { Logger } from "@nestjs/common";
-import { GrpcException } from "@nestjs/microservices";
 import { AuthorizationCodes } from "@sorokchat-messenger/contracts";
 import { GrpcStatus } from "@sorokchat-messenger/microservices";
 import jwt from "jsonwebtoken";
 import z from "zod";
+import { createError } from "../../utils/index.js";
+import { RpcException } from "@nestjs/microservices";
 
 const TokenSchema = z
   .object({
@@ -61,10 +62,10 @@ export class TokenModel {
   }
 
   public static parse(token: string, secret: string): TokenModel {
-    const invalidToken = (): GrpcException => {
-      return new GrpcException(
-        AuthorizationCodes.BAD_CREDENTIALS,
+    const invalidToken = (): RpcException => {
+      return createError(
         GrpcStatus.UNAUTHENTICATED,
+        AuthorizationCodes.BAD_CREDENTIALS,
       );
     };
     try {
@@ -90,7 +91,7 @@ export class TokenModel {
         TokenModel.LOGGER.warn(`Invalid token: ${error.message}`);
         throw invalidToken();
       }
-      if (error instanceof GrpcException) throw error;
+      if (error instanceof RpcException) throw error;
       TokenModel.LOGGER.error(error);
       throw invalidToken();
     }

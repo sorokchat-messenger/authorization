@@ -10,8 +10,8 @@ import {
   USERS_REPOSITORY_TOKEN,
   type IUsersRepository,
 } from "./users.repository.interface.js";
-import { GrpcException } from "@nestjs/microservices";
 import { GrpcStatus } from "@sorokchat-messenger/microservices";
+import { createError } from "../../utils/index.js";
 
 @Injectable()
 export class UsersService {
@@ -25,7 +25,7 @@ export class UsersService {
   public async create(payload: NewUserPayload): Promise<UserModel> {
     const candidate = await this.repository.getByLogin(payload.login);
     if (candidate !== null) {
-      throw new GrpcException(UserCodes.EXISTS, GrpcStatus.ALREADY_EXISTS);
+      throw createError(GrpcStatus.ALREADY_EXISTS, UserCodes.EXISTS);
     }
     const user = await UserModel.create(
       payload.login,
@@ -40,7 +40,7 @@ export class UsersService {
   public async getById(id: number): Promise<UserModel> {
     const user = await this.repository.getById(id);
     if (user === null) {
-      throw new GrpcException(UserCodes.NOT_FOUND, GrpcStatus.NOT_FOUND);
+      throw createError(GrpcStatus.NOT_FOUND, UserCodes.NOT_FOUND);
     } else {
       return user;
     }
@@ -49,7 +49,7 @@ export class UsersService {
   public async getByLogin(login: string): Promise<UserModel> {
     const user = await this.repository.getByLogin(login);
     if (user === null) {
-      throw new GrpcException(UserCodes.NOT_FOUND, GrpcStatus.NOT_FOUND);
+      throw createError(GrpcStatus.NOT_FOUND, UserCodes.NOT_FOUND);
     } else {
       return user;
     }
@@ -58,7 +58,7 @@ export class UsersService {
   public async update(user: UserModel): Promise<UserModel> {
     const candidate = await this.getByLogin(user.login);
     if (candidate !== null && user.id !== candidate.id) {
-      throw new GrpcException(UserCodes.EXISTS, GrpcStatus.ALREADY_EXISTS);
+      throw createError(GrpcStatus.ALREADY_EXISTS, UserCodes.EXISTS);
     } else {
       return await this.repository.save(user);
     }

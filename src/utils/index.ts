@@ -1,1 +1,1 @@
-export * from "./role-hierarchy.util.js";
+export * from "./error.factory.js";
