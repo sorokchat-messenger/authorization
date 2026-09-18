@@ -14,15 +14,13 @@ import {
   type RegisterRequest,
   type LoginRequest,
   type RefreshTokensRequest,
-  type RefreshTokensResponse,
   type ProfileRequest,
   type ProfileResponse,
 } from "@sorokchat-messenger/microservices";
-import { GrpcException } from "@nestjs/microservices";
 import { AuthorizationCodes, UserCodes } from "@sorokchat-messenger/contracts";
 import { TokensService } from "../tokens/tokens.service.js";
 import { UserModel } from "../users/user.model.js";
-import { TokenModel } from "../tokens/token.model.js";
+import { createError } from "../../utils/index.js";
 
 describe("AuthorizationService", () => {
   let service: AuthorizationService;
@@ -56,10 +54,7 @@ describe("AuthorizationService", () => {
       login: "andrey",
       password: "password",
     };
-    const expected = new GrpcException(
-      UserCodes.EXISTS,
-      GrpcStatus.ALREADY_EXISTS,
-    );
+    const expected = createError(GrpcStatus.ALREADY_EXISTS, UserCodes.EXISTS);
     await usersService.create(newUser);
     expect(service.register(newUser)).rejects.toStrictEqual(expected);
   });
@@ -102,9 +97,9 @@ describe("AuthorizationService", () => {
       login: "andrey",
       password: "password",
     };
-    const expected = new GrpcException(
-      AuthorizationCodes.BAD_CREDENTIALS,
+    const expected = createError(
       GrpcStatus.INVALID_ARGUMENT,
+      AuthorizationCodes.BAD_CREDENTIALS,
     );
     expect(service.login(loginRequest)).rejects.toStrictEqual(expected);
   });
@@ -115,9 +110,9 @@ describe("AuthorizationService", () => {
       password: "password",
     };
     await usersService.create({ login: loginRequest.login, password: "test" });
-    const expected = new GrpcException(
-      AuthorizationCodes.BAD_CREDENTIALS,
+    const expected = createError(
       GrpcStatus.INVALID_ARGUMENT,
+      AuthorizationCodes.BAD_CREDENTIALS,
     );
     expect(service.login(loginRequest)).rejects.toStrictEqual(expected);
   });
@@ -138,9 +133,9 @@ describe("AuthorizationService", () => {
     user.login = newUser.login + "a";
     const refreshTokenRequest: RefreshTokensRequest =
       await tokensService.generateTokens(user);
-    const expected = new GrpcException(
-      AuthorizationCodes.BAD_CREDENTIALS,
+    const expected = createError(
       GrpcStatus.INVALID_ARGUMENT,
+      AuthorizationCodes.BAD_CREDENTIALS,
     );
     expect(service.refreshTokens(refreshTokenRequest)).rejects.toStrictEqual(
       expected,
@@ -173,9 +168,9 @@ describe("AuthorizationService", () => {
     const profileRequest: ProfileRequest = {
       accessToken: (await tokensService.generateTokens(user)).accessToken,
     };
-    const expected = new GrpcException(
-      AuthorizationCodes.BAD_CREDENTIALS,
+    const expected = createError(
       GrpcStatus.INVALID_ARGUMENT,
+      AuthorizationCodes.BAD_CREDENTIALS,
     );
     expect(service.profile(profileRequest)).rejects.toStrictEqual(expected);
   });

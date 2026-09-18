@@ -103,9 +103,8 @@ describe("UsersService", () => {
     expect(service.create(payload)).rejects.toStrictEqual(expected);
   });
 
-  it("should throw error when get by id if not found", async () => {
-    const expected = createError(GrpcStatus.NOT_FOUND, UserCodes.NOT_FOUND);
-    expect(service.getById(1)).rejects.toStrictEqual(expected);
+  it("should return null when get by id if not found", async () => {
+    expect(service.getById(1)).resolves.toBeNull();
   });
 
   it("should success return user when get by id existed user", async () => {
@@ -125,9 +124,8 @@ describe("UsersService", () => {
     expect(service.getById(1)).resolves.toStrictEqual(expected);
   });
 
-  it("should throw error when get by login if not found", async () => {
-    const expected = createError(GrpcStatus.NOT_FOUND, UserCodes.NOT_FOUND);
-    expect(service.getByLogin("test")).rejects.toStrictEqual(expected);
+  it("should return null when get by login if not found", async () => {
+    expect(service.getByLogin("test")).resolves.toBeNull();
   });
 
   it("should success return user when get by login existed user", async () => {

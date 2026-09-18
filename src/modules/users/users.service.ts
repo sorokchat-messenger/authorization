@@ -37,22 +37,12 @@ export class UsersService {
     return await this.repository.save(user);
   }
 
-  public async getById(id: number): Promise<UserModel> {
-    const user = await this.repository.getById(id);
-    if (user === null) {
-      throw createError(GrpcStatus.NOT_FOUND, UserCodes.NOT_FOUND);
-    } else {
-      return user;
-    }
+  public async getById(id: number): Promise<UserModel | null> {
+    return await this.repository.getById(id);
   }
 
-  public async getByLogin(login: string): Promise<UserModel> {
-    const user = await this.repository.getByLogin(login);
-    if (user === null) {
-      throw createError(GrpcStatus.NOT_FOUND, UserCodes.NOT_FOUND);
-    } else {
-      return user;
-    }
+  public async getByLogin(login: string): Promise<UserModel | null> {
+    return await this.repository.getByLogin(login);
   }
 
   public async update(user: UserModel): Promise<UserModel> {
@@ -66,6 +56,7 @@ export class UsersService {
 
   public async delete(id: number): Promise<void> {
     const user = await this.getById(id);
+    if (!user) throw createError(GrpcStatus.NOT_FOUND, UserCodes.NOT_FOUND);
     return await this.repository.delete(user.id);
   }
 }

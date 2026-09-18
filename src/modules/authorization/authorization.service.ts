@@ -13,8 +13,7 @@ import {
 } from "@sorokchat-messenger/microservices";
 import { UsersService } from "../users/users.service.js";
 import { UserModel } from "../users/user.model.js";
-import { GrpcException } from "@nestjs/microservices";
-import { AuthorizationCodes, UserCodes } from "@sorokchat-messenger/contracts";
+import { AuthorizationCodes } from "@sorokchat-messenger/contracts";
 import {
   PASSWORD_SECRET_TOKEN,
   SIGNING_TOKEN,
@@ -24,14 +23,10 @@ import { type ISigning } from "@sorokchat-messenger/cryptography-abstractions";
 import { TokensService } from "../tokens/tokens.service.js";
 import { TOKENS_OPTIONS_TOKEN } from "../tokens/tokens.options.provider.js";
 import { TokenModel } from "../tokens/token.model.js";
+import { createError } from "../../utils/index.js";
 
 @Injectable()
 export class AuthorizationService {
-  private static readonly EXCEPTION = new GrpcException(
-    AuthorizationCodes.BAD_CREDENTIALS,
-    GrpcStatus.INVALID_ARGUMENT,
-  );
-
   private readonly logger: Logger = new Logger(AuthorizationService.name);
 
   public constructor(
@@ -48,70 +43,65 @@ export class AuthorizationService {
   }
 
   public async login(payload: LoginRequest): Promise<LoginResponse> {
-    try {
-      const candidate = await this.usersService.getByLogin(payload.login);
-      const isPasswordValid = await candidate.verifyPassword(
-        this.signingService,
-        this.secret,
-        payload.password,
+    const candidate = await this.usersService.getByLogin(payload.login);
+    if (!candidate)
+      throw createError(
+        GrpcStatus.INVALID_ARGUMENT,
+        AuthorizationCodes.BAD_CREDENTIALS,
       );
-      if (!isPasswordValid) throw AuthorizationService.EXCEPTION;
-      return await this.authorize(candidate);
-    } catch (error) {
-      throw this.validateError(error);
-    }
+    const isPasswordValid = await candidate.verifyPassword(
+      this.signingService,
+      this.secret,
+      payload.password,
+    );
+    if (!isPasswordValid)
+      throw createError(
+        GrpcStatus.INVALID_ARGUMENT,
+        AuthorizationCodes.BAD_CREDENTIALS,
+      );
+    return await this.authorize(candidate);
   }
 
   public async refreshTokens({
     refreshToken,
   }: RefreshTokensRequest): Promise<RefreshTokensResponse> {
-    try {
-      const token = TokenModel.parse(
-        refreshToken,
-        this.tokensOptions.refresh.secret,
+    const token = TokenModel.parse(
+      refreshToken,
+      this.tokensOptions.refresh.secret,
+    );
+    const user = await this.usersService.getByLogin(token.subject);
+    if (!user)
+      throw createError(
+        GrpcStatus.UNAUTHENTICATED,
+        AuthorizationCodes.UNAUTHORIZED,
       );
-      const user = await this.usersService.getByLogin(token.subject);
-      return await this.authorize(user);
-    } catch (error) {
-      throw this.validateError(error);
-    }
+    return await this.authorize(user);
   }
 
   public async profile({
     accessToken,
   }: ProfileRequest): Promise<ProfileResponse> {
-    try {
-      const token = TokenModel.parse(
-        accessToken,
-        this.tokensOptions.access.secret,
+    const token = TokenModel.parse(
+      accessToken,
+      this.tokensOptions.access.secret,
+    );
+    const user = await this.usersService.getByLogin(token.subject);
+    if (!user)
+      throw createError(
+        GrpcStatus.UNAUTHENTICATED,
+        AuthorizationCodes.UNAUTHORIZED,
       );
-      const user = await this.usersService.getByLogin(token.subject);
-      return {
-        login: user.login,
-        password: user.hashedPassword,
-        role: user.role as Role,
-        displayName: user.displayName,
-      };
-    } catch (error) {
-      throw this.validateError(error);
-    }
+    return {
+      login: user.login,
+      password: user.hashedPassword,
+      role: user.role as Role,
+      displayName: user.displayName,
+    };
   }
 
   private async authorize(
     user: UserModel,
   ): Promise<RegisterResponse | LoginResponse | RefreshTokensResponse> {
     return await this.tokensService.generateTokens(user);
-  }
-
-  private validateError(error: unknown): GrpcException | unknown {
-    if (
-      error instanceof GrpcException &&
-      error.getCode() === GrpcStatus.NOT_FOUND &&
-      error.message === UserCodes.NOT_FOUND
-    ) {
-      return AuthorizationService.EXCEPTION;
-    }
-    this.logger.error(`Authorization user error`, error);
-    return error;
   }
 }
