@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import {
   GrpcStatus,
   type ProfileRequest,
@@ -27,8 +27,6 @@ import { createError } from "../../utils/index.js";
 
 @Injectable()
 export class AuthorizationService {
-  private readonly logger: Logger = new Logger(AuthorizationService.name);
-
   public constructor(
     private readonly usersService: UsersService,
     @Inject(SIGNING_TOKEN) private readonly signingService: ISigning,
