@@ -33,7 +33,7 @@
     "@sorokchat-messenger/contracts": "^1.0.17",
     "@sorokchat-messenger/cryptography-abstractions": "^1.0.2",
     "@sorokchat-messenger/cryptography-node": "^1.0.1",
-    "@sorokchat-messenger/microservices": "^1.0.4",
+    "@sorokchat-messenger/microservices": "^1.0.5",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2",

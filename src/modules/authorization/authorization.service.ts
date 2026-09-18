@@ -91,7 +91,6 @@ export class AuthorizationService {
       );
     return {
       login: user.login,
-      password: user.hashedPassword,
       role: user.role as Role,
       displayName: user.displayName,
     };
