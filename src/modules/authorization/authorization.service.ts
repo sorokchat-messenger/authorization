@@ -90,9 +90,10 @@ export class AuthorizationService {
         AuthorizationCodes.UNAUTHORIZED,
       );
     return {
+      id: user.id,
       login: user.login,
-      role: user.role as Role,
       displayName: user.displayName,
+      role: user.role as Role,
     };
   }
 
