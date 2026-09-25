@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import {
   GrpcStatus,
   type ProfileRequest,
@@ -27,13 +27,15 @@ import { createError } from "../../utils/index.js";
 
 @Injectable()
 export class AuthorizationService {
+  private readonly logger = new Logger(AuthorizationService.name);
+
   public constructor(
     private readonly usersService: UsersService,
     @Inject(SIGNING_TOKEN) private readonly signingService: ISigning,
     @Inject(PASSWORD_SECRET_TOKEN) private readonly secret: string,
     @Inject(TOKENS_OPTIONS_TOKEN) private readonly tokensOptions: TokensConfig,
     private readonly tokensService: TokensService,
-  ) {}
+  ) { }
 
   public async register(payload: RegisterRequest): Promise<RegisterResponse> {
     const user = await this.usersService.create(payload);
@@ -79,22 +81,33 @@ export class AuthorizationService {
   public async profile({
     accessToken,
   }: ProfileRequest): Promise<ProfileResponse> {
-    const token = TokenModel.parse(
-      accessToken,
-      this.tokensOptions.access.secret,
-    );
-    const user = await this.usersService.getByLogin(token.subject);
-    if (!user)
-      throw createError(
-        GrpcStatus.UNAUTHENTICATED,
-        AuthorizationCodes.UNAUTHORIZED,
+    this.logger.debug(`Access token: "${accessToken}"`);
+    try {
+      const token = TokenModel.parse(
+        accessToken,
+        this.tokensOptions.access.secret,
       );
-    return {
-      id: user.id,
-      login: user.login,
-      displayName: user.displayName,
-      role: user.role as Role,
-    };
+      this.logger.debug(`Parsed token: ${JSON.stringify(token)}`);
+      const user = await this.usersService.getByLogin(token.subject);
+      if (!user) {
+        this.logger.debug(`User by login "${token.subject}" not found`);
+        throw createError(
+          GrpcStatus.UNAUTHENTICATED,
+          AuthorizationCodes.UNAUTHORIZED,
+        );
+      }
+      const result = {
+        id: user.id,
+        login: user.login,
+        displayName: user.displayName,
+        role: user.role as Role,
+      };
+      this.logger.debug(`USER: ${JSON.stringify(result)}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Unknown error: `, error);
+      throw error;
+    }
   }
 
   private async authorize(

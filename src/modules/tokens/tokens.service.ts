@@ -13,7 +13,7 @@ import type {
 export class TokensService {
   public constructor(
     @Inject(TOKENS_OPTIONS_TOKEN) private readonly tokensOptions: TokensConfig,
-  ) {}
+  ) { }
 
   public async generateTokens(
     user: UserModel,
@@ -35,7 +35,7 @@ export class TokensService {
   }
 
   private generateToken(user: UserModel, duration: number): TokenModel {
-    const now = new Date();
-    return TokenModel.of(user.login, now, new Date(now.getTime() + duration));
+    const now = Date.now();
+    return TokenModel.of(user.login, now, now + duration);
   }
 }

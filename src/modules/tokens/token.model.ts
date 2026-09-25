@@ -12,14 +12,14 @@ const TokenSchema = z
       .string({ error: "subject має бути рядком" })
       .nonempty({ error: "subject не може бути порожнім" })
       .nonoptional({ error: "subject має бути" }),
-    issuedAt: z.date({
+    issuedAt: z.number({
       error: "Дата та час видачі токена має бути часовою міткою",
     }),
-    expiredAt: z.date({
+    expiredAt: z.number({
       error: "Дата та час закінчення дії токена має бути часовою міткою",
     }),
   })
-  .refine((data) => data.expiredAt.getTime() > data.issuedAt.getTime(), {
+  .refine((data) => data.expiredAt > data.issuedAt, {
     error:
       "Дата та час закінчення дії токена має бути пізніше ніж дата та час видачі токена",
     path: [],
@@ -29,10 +29,10 @@ export class TokenModel {
   private static readonly LOGGER: Logger = new Logger(TokenModel.name);
 
   private readonly _subject: string;
-  private readonly _issuedAt: Date;
-  private readonly _expiredAt: Date;
+  private readonly _issuedAt: number;
+  private readonly _expiredAt: number;
 
-  private constructor(subject: string, issuedAt: Date, expiredAt: Date) {
+  private constructor(subject: string, issuedAt: number, expiredAt: number) {
     this._subject = subject;
     this._issuedAt = issuedAt;
     this._expiredAt = expiredAt;
@@ -40,8 +40,8 @@ export class TokenModel {
 
   public static of(
     subject: string,
-    issuedAt: Date,
-    expiredAt: Date,
+    issuedAt: number,
+    expiredAt: number,
   ): TokenModel {
     const result = TokenSchema.safeParse({
       subject,
@@ -77,22 +77,29 @@ export class TokenModel {
       if (typeof sub !== "string") throw invalidToken();
       if (typeof iat !== "number") throw invalidToken();
       if (typeof exp !== "number") throw invalidToken();
+      TokenModel.LOGGER.debug(`Subject: ${sub}`);
+      TokenModel.LOGGER.debug(`Issued at at: ${iat}`);
+      TokenModel.LOGGER.debug(`Expiration at: ${exp}`);
       const model = TokenModel.of(
         sub,
-        new Date(iat * 1000),
-        new Date(exp * 1000),
+        iat,
+        exp,
       );
       return model;
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
+        TokenModel.LOGGER.debug("Access token expired");
         throw invalidToken();
       }
       if (error instanceof jwt.JsonWebTokenError) {
         TokenModel.LOGGER.warn(`Invalid token: ${error.message}`);
         throw invalidToken();
       }
-      if (error instanceof RpcException) throw error;
-      TokenModel.LOGGER.error(error);
+      if (error instanceof RpcException) {
+        this.LOGGER.error(`Rpc error`, error);
+        throw error;
+      }
+      TokenModel.LOGGER.error("Unknown error", error);
       throw invalidToken();
     }
   }
@@ -101,21 +108,21 @@ export class TokenModel {
     return this._subject;
   }
 
-  public get issuedAt(): Date {
+  public get issuedAt(): number {
     return this._issuedAt;
   }
 
-  public get expiredAt(): Date {
+  public get expiredAt(): number {
     return this._expiredAt;
   }
 
   public get isExpired(): boolean {
-    return this._expiredAt.getTime() <= Date.now();
+    return this._expiredAt <= Date.now();
   }
 
   public get lifetimeSeconds(): number {
     return Math.floor(
-      (this._expiredAt.getTime() - this._issuedAt.getTime()) / 1000,
+      (this._expiredAt - this._issuedAt) / 1000,
     );
   }
 
@@ -123,8 +130,8 @@ export class TokenModel {
     return jwt.sign(
       {
         sub: this._subject,
-        iat: Math.floor(this._issuedAt.getTime() / 1000),
-        exp: Math.floor(this._expiredAt.getTime() / 1000),
+        iat: Math.floor(this._issuedAt / 1000),
+        exp: Math.floor(this._expiredAt / 1000),
       },
       secret,
     );
