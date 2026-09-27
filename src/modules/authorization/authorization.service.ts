@@ -30,7 +30,7 @@ export class AuthorizationService {
 
   public constructor(
     private readonly usersService: UsersService,
-    @Inject(PASSWORD_ENCODING_TOKEN) private readonly signingService: PasswordEncoder,
+    @Inject(PASSWORD_ENCODING_TOKEN) private readonly passwordEncoder: PasswordEncoder,
     @Inject(TOKENS_OPTIONS_TOKEN) private readonly tokensOptions: TokensConfig,
     private readonly tokensService: TokensService,
   ) { }
@@ -48,7 +48,7 @@ export class AuthorizationService {
         AuthorizationCodes.BAD_CREDENTIALS,
       );
     const isPasswordValid = await candidate.verifyPassword(
-      this.signingService,
+      this.passwordEncoder,
       payload.password,
     );
     if (!isPasswordValid)

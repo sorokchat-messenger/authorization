@@ -85,10 +85,10 @@ export class UserModel {
   public static async create(
     login: string,
     password: string,
-    signingService: PasswordEncoder,
+    passwordService: PasswordEncoder,
     displayName?: string,
   ): Promise<UserModel> {
-    const signedPassword: string = await signingService.encode(password);
+    const signedPassword: string = await passwordService.encode(password);
     return new UserModel(
       null,
       login,
