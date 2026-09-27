@@ -1,6 +1,6 @@
 import { Provider } from "@nestjs/common";
 import { ISigning } from "@sorokchat-messenger/cryptography-abstractions";
-import { SIGNING_TOKEN } from "../../src/infrastructure/index.js";
+import { SIGNING_TOKEN, PASSWORD_SIGNING_TOKEN } from "../../src/infrastructure/index.js";
 
 class SigningMock implements ISigning {
   public async sign(plaintext: string, secret: string): Promise<string> {
@@ -21,3 +21,8 @@ export const MOCK_SIGNING_PROVIDER: Provider<ISigning> = {
   provide: SIGNING_TOKEN,
   useClass: SigningMock,
 };
+
+export const MOCK_PASSWORD_SIGNING_PROVIDER: Provider<ISigning> = {
+  provide: PASSWORD_SIGNING_TOKEN,
+  useClass: SigningMock
+}

@@ -2,7 +2,6 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { UsersService } from "./users.service.js";
 import {
   MOCK_PASSWORD_SECRET_PROVIDER,
-  MOCK_SIGNING_PROVIDER,
   MOCK_USERS_REPOSITORY_PROVIDER,
 } from "../../../test/index.js";
 import {
@@ -11,10 +10,10 @@ import {
   type NewUserPayload,
 } from "@sorokchat-messenger/contracts";
 import { UserModel } from "./user.model.js";
-import { ISigning } from "@sorokchat-messenger/cryptography-abstractions";
+import { type PasswordEncoder } from "@sorokchat-messenger/cryptography-abstractions";
 import {
   PASSWORD_SECRET_TOKEN,
-  SIGNING_TOKEN,
+  PASSWORD_ENCODING_TOKEN,
 } from "../../infrastructure/index.js";
 import {
   IUsersRepository,
@@ -26,7 +25,7 @@ import { GrpcStatus } from "@sorokchat-messenger/microservices";
 describe("UsersService", () => {
   let service: UsersService;
   let secret: string;
-  let signing: ISigning;
+  let passwordEncoder: PasswordEncoder;
   let repository: IUsersRepository;
 
   beforeEach(async () => {
@@ -35,13 +34,13 @@ describe("UsersService", () => {
         UsersService,
         MOCK_PASSWORD_SECRET_PROVIDER,
         MOCK_USERS_REPOSITORY_PROVIDER,
-        MOCK_SIGNING_PROVIDER,
+        MOCK_USERS_REPOSITORY_PROVIDER,
       ],
     }).compile();
 
     service = module.get<UsersService>(UsersService);
     secret = module.get<string>(PASSWORD_SECRET_TOKEN);
-    signing = module.get<ISigning>(SIGNING_TOKEN);
+    passwordEncoder = module.get<PasswordEncoder>(PASSWORD_ENCODING_TOKEN);
     repository = module.get<IUsersRepository>(USERS_REPOSITORY_TOKEN);
   });
 
@@ -58,7 +57,7 @@ describe("UsersService", () => {
     const expected = UserModel.fromStorage(
       1,
       payload.login,
-      await signing.sign(payload.password, secret),
+      await passwordEncoder.encode(payload.password),
       payload.login,
       Role.USER,
     );
@@ -76,7 +75,7 @@ describe("UsersService", () => {
     const expected = UserModel.fromStorage(
       1,
       payload.login,
-      await signing.sign(payload.password, secret),
+      await passwordEncoder.encode(payload.password),
       payload.displayName,
       Role.USER,
     );
@@ -94,7 +93,7 @@ describe("UsersService", () => {
     const user = UserModel.fromStorage(
       1,
       payload.login,
-      await signing.sign(payload.password, secret),
+      await passwordEncoder.encode(payload.password),
       payload.displayName,
       Role.USER,
     );
@@ -116,7 +115,7 @@ describe("UsersService", () => {
     const expected = UserModel.fromStorage(
       1,
       payload.login,
-      await signing.sign(payload.password, secret),
+      await passwordEncoder.encode(payload.password),
       payload.displayName,
       Role.USER,
     );
@@ -137,7 +136,7 @@ describe("UsersService", () => {
     const expected = UserModel.fromStorage(
       1,
       payload.login,
-      await signing.sign(payload.password, secret),
+      await passwordEncoder.encode(payload.password),
       payload.displayName,
       Role.USER,
     );
@@ -149,19 +148,19 @@ describe("UsersService", () => {
     const created = await UserModel.create(
       "andrey",
       "password",
-      signing,
+      passwordEncoder,
       secret,
     );
     const firstUser = await UserModel.create(
       created.login,
       created.hashedPassword,
-      signing,
+      passwordEncoder,
       secret,
     );
     const secondUser = await UserModel.create(
       created.login + "s",
       created.hashedPassword,
-      signing,
+      passwordEncoder,
       secret,
     );
     await repository.save(firstUser);
@@ -175,13 +174,13 @@ describe("UsersService", () => {
     const created = await UserModel.create(
       "andrey",
       "password",
-      signing,
+      passwordEncoder,
       secret,
     );
     const user = await UserModel.create(
       created.login,
       created.hashedPassword,
-      signing,
+      passwordEncoder,
       secret,
     );
     const expected = await repository.save(user);
@@ -193,13 +192,13 @@ describe("UsersService", () => {
     const created = await UserModel.create(
       "andrey",
       "password",
-      signing,
+      passwordEncoder,
       secret,
     );
     const user = await UserModel.create(
       created.login,
       created.hashedPassword,
-      signing,
+      passwordEncoder,
       secret,
     );
     const savedUser = await repository.save(user);

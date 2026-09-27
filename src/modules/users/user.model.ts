@@ -1,5 +1,5 @@
 import { Role, ROLE_HIERARCHY } from "@sorokchat-messenger/contracts";
-import { ISigning } from "@sorokchat-messenger/cryptography-abstractions";
+import { type PasswordEncoder } from "@sorokchat-messenger/cryptography-abstractions";
 
 export class UserModel {
   private static readonly HIERARCHY = ROLE_HIERARCHY;
@@ -37,19 +37,17 @@ export class UserModel {
   }
 
   public async verifyPassword(
-    service: ISigning,
-    secret: string,
+    service: PasswordEncoder,
     password: string,
   ): Promise<boolean> {
-    return await service.verify(password, this._password, secret);
+    return await service.verify(password, this._password);
   }
 
   public async changePassword(
-    service: ISigning,
-    secret: string,
+    service: PasswordEncoder,
     password: string,
   ): Promise<void> {
-    this._password = await service.sign(password, secret);
+    this._password = await service.encode(password);
   }
 
   public get displayName(): string {
@@ -87,11 +85,10 @@ export class UserModel {
   public static async create(
     login: string,
     password: string,
-    signingService: ISigning,
-    secret: string,
+    signingService: PasswordEncoder,
     displayName?: string,
   ): Promise<UserModel> {
-    const signedPassword: string = await signingService.sign(password, secret);
+    const signedPassword: string = await signingService.encode(password);
     return new UserModel(
       null,
       login,

@@ -15,11 +15,10 @@ import { UsersService } from "../users/users.service.js";
 import { UserModel } from "../users/user.model.js";
 import { AuthorizationCodes } from "@sorokchat-messenger/contracts";
 import {
-  PASSWORD_SECRET_TOKEN,
-  SIGNING_TOKEN,
+  PASSWORD_ENCODING_TOKEN,
   type TokensConfig,
 } from "../../infrastructure/index.js";
-import { type ISigning } from "@sorokchat-messenger/cryptography-abstractions";
+import { type PasswordEncoder } from "@sorokchat-messenger/cryptography-abstractions";
 import { TokensService } from "../tokens/tokens.service.js";
 import { TOKENS_OPTIONS_TOKEN } from "../tokens/tokens.options.provider.js";
 import { TokenModel } from "../tokens/token.model.js";
@@ -31,8 +30,7 @@ export class AuthorizationService {
 
   public constructor(
     private readonly usersService: UsersService,
-    @Inject(SIGNING_TOKEN) private readonly signingService: ISigning,
-    @Inject(PASSWORD_SECRET_TOKEN) private readonly secret: string,
+    @Inject(PASSWORD_ENCODING_TOKEN) private readonly signingService: PasswordEncoder,
     @Inject(TOKENS_OPTIONS_TOKEN) private readonly tokensOptions: TokensConfig,
     private readonly tokensService: TokensService,
   ) { }
@@ -51,7 +49,6 @@ export class AuthorizationService {
       );
     const isPasswordValid = await candidate.verifyPassword(
       this.signingService,
-      this.secret,
       payload.password,
     );
     if (!isPasswordValid)
