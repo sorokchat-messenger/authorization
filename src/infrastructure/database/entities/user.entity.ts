@@ -12,7 +12,7 @@ export class UserEntity {
   @Column({ nullable: false, type: "varchar" })
   public password: string;
 
-  @Column({ nullable: false, type: "varchar" })
+  @Column({ nullable: false, type: "varchar", name: "display_name" })
   public displayName: string;
 
   @Column({ nullable: false, type: "varchar" })
