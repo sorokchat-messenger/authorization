@@ -31,10 +31,10 @@ export class UsersService {
       this.passwordEncoder,
       payload.displayName,
     );
-    return await this.repository.save(user);
+    return await this.repository.create(user);
   }
 
-  public async getById(id: number): Promise<UserModel | null> {
+  public async getById(id: string): Promise<UserModel | null> {
     return await this.repository.getById(id);
   }
 
@@ -51,7 +51,7 @@ export class UsersService {
     }
   }
 
-  public async delete(id: number): Promise<void> {
+  public async delete(id: string): Promise<void> {
     const user = await this.getById(id);
     if (!user) throw createError(GrpcStatus.NOT_FOUND, UserCodes.NOT_FOUND);
     return await this.repository.delete(user.id);

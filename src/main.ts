@@ -23,6 +23,7 @@ async function bootstrap() {
   }
   const service = createAuthorizationService(url);
   const application = await createServer(AppModule, service);
+  application.enableShutdownHooks();
   const logger = new Logger(service.name);
   logger.log(`Starting gRPC on ${url}`);
   await application.listen();

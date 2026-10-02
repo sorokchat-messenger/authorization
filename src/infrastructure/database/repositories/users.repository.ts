@@ -1,53 +1,61 @@
 import { Injectable, Provider } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { UserEntity } from "../entities/index.js";
-import { Repository } from "typeorm";
 import { UserModel } from "../../../modules/users/user.model.js";
 import {
   IUsersRepository,
   USERS_REPOSITORY_TOKEN,
 } from "../../../modules/users/users.repository.interface.js";
+import { PrismaService } from "../prisma/index.js";
+import { Role, type User } from "../../../generated/prisma/client.js";
+import { NewUser } from "../../../modules/users/new-user.type.js";
 
 @Injectable()
 export class UsersRepository implements IUsersRepository {
   public constructor(
-    @InjectRepository(UserEntity)
-    private readonly repository: Repository<UserEntity>,
-  ) {}
+    private readonly prisma: PrismaService
+  ) { }
 
-  public async save(user: UserModel): Promise<UserModel> {
-    const entity = this.toEntity(user);
-    const saved = await this.repository.save(entity);
+  public async create(user: NewUser): Promise<UserModel> {
+    const saved = await this.prisma.user.create({
+      data: {
+        login: user.login,
+        password: user.password,
+        displayName: user.displayName || user.login
+      }
+    });
     return this.toModel(saved);
   }
 
-  public async getById(id: number): Promise<UserModel | null> {
-    const user = await this.repository.findOneBy({ id });
+  public async save(user: UserModel): Promise<UserModel> {
+    const updated = await this.prisma.user.update({ where: { id: user.id }, data: this.toEntity(user) });
+    return this.toModel(updated);
+  }
+
+  public async getById(id: string): Promise<UserModel | null> {
+    const user = await this.prisma.user.findFirst({ where: { id } });
     if (user === null) return null;
     return this.toModel(user);
   }
 
   public async getByLogin(login: string): Promise<UserModel | null> {
-    const user = await this.repository.findOneBy({ login });
+    const user = await this.prisma.user.findFirst({ where: { login } });
     if (user === null) return null;
     return this.toModel(user);
   }
 
-  public async delete(id: number): Promise<void> {
-    await this.repository.delete({ id });
+  public async delete(id: string): Promise<void> {
+    await this.prisma.user.delete({ where: { id } });
   }
 
-  private toEntity(model: UserModel): UserEntity {
+  private toEntity(model: UserModel): Omit<User, 'id'> {
     return {
-      id: model.id === 0 ? undefined! : model.id,
       login: model.login,
       password: model.hashedPassword,
       displayName: model.displayName,
-      role: model.role,
+      role: model.role as Role,
     };
   }
 
-  private toModel(entity: UserEntity): UserModel {
+  private toModel(entity: User): UserModel {
     return UserModel.fromStorage(
       entity.id,
       entity.login,

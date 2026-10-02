@@ -1,17 +1,18 @@
 import { Role, ROLE_HIERARCHY } from "@sorokchat-messenger/contracts";
 import { type PasswordEncoder } from "@sorokchat-messenger/cryptography-abstractions";
+import { type NewUser } from "./new-user.type.js";
 
 export class UserModel {
   private static readonly HIERARCHY = ROLE_HIERARCHY;
 
-  private readonly _id: number | null;
+  private readonly _id: string;
   private _login: string;
   private _password: string;
   private _displayName: string;
   private _role: Role;
 
   private constructor(
-    id: number | null,
+    id: string,
     login: string,
     password: string,
     displayName: string,
@@ -24,8 +25,8 @@ export class UserModel {
     this._role = role;
   }
 
-  public get id(): number {
-    return this._id ?? 0;
+  public get id(): string {
+    return this._id;
   }
 
   public get login(): string {
@@ -87,19 +88,17 @@ export class UserModel {
     password: string,
     passwordService: PasswordEncoder,
     displayName?: string,
-  ): Promise<UserModel> {
+  ): Promise<NewUser> {
     const signedPassword: string = await passwordService.encode(password);
-    return new UserModel(
-      null,
+    return {
       login,
-      signedPassword,
-      displayName || login,
-      Role.USER,
-    );
+      password: signedPassword,
+      displayName
+    }
   }
 
   public static fromStorage(
-    id: number,
+    id: string,
     login: string,
     password: string,
     displayName: string,
