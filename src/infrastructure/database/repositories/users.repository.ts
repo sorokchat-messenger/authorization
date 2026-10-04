@@ -6,7 +6,6 @@ import {
 } from "../../../modules/users/users.repository.interface.js";
 import { PrismaService } from "../prisma/index.js";
 import { Role, type User } from "../../../generated/prisma/client.js";
-import { NewUser } from "../../../modules/users/new-user.type.js";
 
 @Injectable()
 export class UsersRepository implements IUsersRepository {
@@ -14,13 +13,9 @@ export class UsersRepository implements IUsersRepository {
     private readonly prisma: PrismaService
   ) { }
 
-  public async create(user: NewUser): Promise<UserModel> {
+  public async create(user: UserModel): Promise<UserModel> {
     const saved = await this.prisma.user.create({
-      data: {
-        login: user.login,
-        password: user.password,
-        displayName: user.displayName || user.login
-      }
+      data: this.toEntity(user)
     });
     return this.toModel(saved);
   }
@@ -46,8 +41,9 @@ export class UsersRepository implements IUsersRepository {
     await this.prisma.user.delete({ where: { id } });
   }
 
-  private toEntity(model: UserModel): Omit<User, 'id'> {
+  private toEntity(model: UserModel): User {
     return {
+      id: model.id,
       login: model.login,
       password: model.hashedPassword,
       displayName: model.displayName,
