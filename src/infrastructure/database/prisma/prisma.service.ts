@@ -16,7 +16,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             idleTimeoutMillis: 30000,
             connectionTimeoutMillis: 2000,
             keepAlive: true
-        })
+        });
         super({ adapter: new PrismaPg(pool) });
         this.pool = pool;
     }
