@@ -10,9 +10,9 @@ import {
   type LoginResponse,
   type RegisterRequest,
   type RegisterResponse,
+  USERS_SERVICE_NAME,
+  type UsersServiceClient,
 } from "@sorokchat-messenger/microservices";
-import { UsersService } from "../users/users.service.js";
-import { UserModel } from "../users/user.model.js";
 import { AuthorizationCodes } from "@sorokchat-messenger/contracts";
 import {
   PASSWORD_ENCODING_TOKEN,
@@ -23,20 +23,20 @@ import { TokensService } from "../tokens/tokens.service.js";
 import { TOKENS_OPTIONS_TOKEN } from "../tokens/tokens.options.provider.js";
 import { TokenModel } from "../tokens/token.model.js";
 import { createError } from "../../utils/index.js";
+import { lastValueFrom } from "rxjs";
 
 @Injectable()
 export class AuthorizationService {
   private readonly logger = new Logger(AuthorizationService.name);
 
   public constructor(
-    private readonly usersService: UsersService,
-    @Inject(PASSWORD_ENCODING_TOKEN) private readonly passwordEncoder: PasswordEncoder,
+    @Inject(USERS_SERVICE_NAME) private readonly usersService: UsersServiceClient,
     @Inject(TOKENS_OPTIONS_TOKEN) private readonly tokensOptions: TokensConfig,
     private readonly tokensService: TokensService,
   ) { }
 
   public async register(payload: RegisterRequest): Promise<RegisterResponse> {
-    const user = await this.usersService.create(payload);
+    const user = await lastValueFrom(this.usersService.create(payload));
     return await this.authorize(user);
   }
 

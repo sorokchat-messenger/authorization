@@ -3,15 +3,13 @@ import {
   type BasicConfig,
 } from "@sorokchat-messenger/config";
 import type {
-  CryptographyConfig,
-  DatabaseConfig,
   TokensConfig,
+  UsersConfig,
 } from "../schemas/index.js";
 
 export type AllConfigs = {
   basic: BasicConfig;
   grpc: GrpcConnectionConfig;
-  database: DatabaseConfig;
-  cryptography: CryptographyConfig;
+  users: UsersConfig
   tokens: TokensConfig;
 };
