@@ -1,6 +1,6 @@
 import { registerEnv } from "@sorokchat-messenger/config";
-import { UserSchema } from "@sorokchat-messenger/contracts";
+import { UsersSchema } from "../schemas/index.js";
 
 export function getUsersEnv(data: unknown) {
-    return registerEnv("users", UserSchema, data);
+    return registerEnv("users", UsersSchema, data);
 }

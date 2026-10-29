@@ -12,18 +12,18 @@ import {
   type RegisterResponse,
   USERS_SERVICE_NAME,
   type UsersServiceClient,
+  type GetUserResponse
 } from "@sorokchat-messenger/microservices";
-import { AuthorizationCodes } from "@sorokchat-messenger/contracts";
+import { AuthorizationCodes, UserCodes } from "@sorokchat-messenger/contracts";
 import {
-  PASSWORD_ENCODING_TOKEN,
   type TokensConfig,
 } from "../../infrastructure/index.js";
-import { type PasswordEncoder } from "@sorokchat-messenger/cryptography-abstractions";
 import { TokensService } from "../tokens/tokens.service.js";
 import { TOKENS_OPTIONS_TOKEN } from "../tokens/tokens.options.provider.js";
 import { TokenModel } from "../tokens/token.model.js";
 import { createError } from "../../utils/index.js";
 import { lastValueFrom } from "rxjs";
+import { RpcException } from "@nestjs/microservices";
 
 @Injectable()
 export class AuthorizationService {
@@ -36,27 +36,22 @@ export class AuthorizationService {
   ) { }
 
   public async register(payload: RegisterRequest): Promise<RegisterResponse> {
-    const user = await lastValueFrom(this.usersService.create(payload));
+    const { user } = await lastValueFrom(this.usersService.create(payload));
+    if (user === undefined) throw new RpcException({
+      message: UserCodes.EXISTS,
+      code: GrpcStatus.ALREADY_EXISTS
+    });
     return await this.authorize(user);
   }
 
   public async login(payload: LoginRequest): Promise<LoginResponse> {
-    const candidate = await this.usersService.getByLogin(payload.login);
-    if (!candidate)
+    const { user } = await lastValueFrom(this.usersService.checkCredentials(payload));
+    if (!user)
       throw createError(
         GrpcStatus.INVALID_ARGUMENT,
         AuthorizationCodes.BAD_CREDENTIALS,
       );
-    const isPasswordValid = await candidate.verifyPassword(
-      this.passwordEncoder,
-      payload.password,
-    );
-    if (!isPasswordValid)
-      throw createError(
-        GrpcStatus.INVALID_ARGUMENT,
-        AuthorizationCodes.BAD_CREDENTIALS,
-      );
-    return await this.authorize(candidate);
+    return await this.authorize(user);
   }
 
   public async refreshTokens({
@@ -66,7 +61,7 @@ export class AuthorizationService {
       refreshToken,
       this.tokensOptions.refresh.secret,
     );
-    const user = await this.usersService.getByLogin(token.subject);
+    const user = await lastValueFrom(this.usersService.getById({ id: token.subject }));
     if (!user)
       throw createError(
         GrpcStatus.UNAUTHENTICATED,
@@ -85,7 +80,7 @@ export class AuthorizationService {
         this.tokensOptions.access.secret,
       );
       this.logger.debug(`Parsed token: ${JSON.stringify(token)}`);
-      const user = await this.usersService.getByLogin(token.subject);
+      const user = await lastValueFrom(this.usersService.getById({ id: token.subject }));
       if (!user) {
         this.logger.debug(`User by login "${token.subject}" not found`);
         throw createError(
@@ -108,7 +103,7 @@ export class AuthorizationService {
   }
 
   private async authorize(
-    user: UserModel,
+    user: GetUserResponse,
   ): Promise<RegisterResponse | LoginResponse | RefreshTokensResponse> {
     return await this.tokensService.generateTokens(user);
   }

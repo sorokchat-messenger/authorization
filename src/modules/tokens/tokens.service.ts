@@ -1,9 +1,9 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { TOKENS_OPTIONS_TOKEN } from "./tokens.options.provider.js";
 import { type TokensConfig } from "../../infrastructure/index.js";
-import { UserModel } from "../users/user.model.js";
 import { TokenModel } from "./token.model.js";
 import type {
+  GetUserResponse,
   LoginResponse,
   RefreshTokensResponse,
   RegisterResponse,
@@ -16,7 +16,7 @@ export class TokensService {
   ) { }
 
   public async generateTokens(
-    user: UserModel,
+    user: GetUserResponse,
   ): Promise<RegisterResponse | LoginResponse | RefreshTokensResponse> {
     const refreshToken = this.generateRefreshToken(user);
     const acccessToken = this.generateAccessToken(user);
@@ -26,16 +26,16 @@ export class TokensService {
     };
   }
 
-  private generateRefreshToken(user: UserModel): TokenModel {
+  private generateRefreshToken(user: GetUserResponse): TokenModel {
     return this.generateToken(user, this.tokensOptions.refresh.duration);
   }
 
-  private generateAccessToken(user: UserModel): TokenModel {
+  private generateAccessToken(user: GetUserResponse): TokenModel {
     return this.generateToken(user, this.tokensOptions.access.duration);
   }
 
-  private generateToken(user: UserModel, duration: number): TokenModel {
+  private generateToken(user: GetUserResponse, duration: number): TokenModel {
     const now = Date.now();
-    return TokenModel.of(user.login, now, now + duration);
+    return TokenModel.of(user.id, now, now + duration);
   }
 }
