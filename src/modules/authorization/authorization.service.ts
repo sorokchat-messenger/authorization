@@ -10,12 +10,12 @@ import {
   type LoginResponse,
   type RegisterRequest,
   type RegisterResponse,
-  USERS_SERVICE_NAME,
   type UsersServiceClient,
-  type GetUserResponse
+  type GetUserResponse,
 } from "@sorokchat-messenger/microservices";
 import { AuthorizationCodes, UserCodes } from "@sorokchat-messenger/contracts";
 import {
+  USERS_SERVICE_TOKEN,
   type TokensConfig,
 } from "../../infrastructure/index.js";
 import { TokensService } from "../tokens/tokens.service.js";
@@ -30,7 +30,7 @@ export class AuthorizationService {
   private readonly logger = new Logger(AuthorizationService.name);
 
   public constructor(
-    @Inject(USERS_SERVICE_NAME) private readonly usersService: UsersServiceClient,
+    @Inject(USERS_SERVICE_TOKEN) private readonly usersService: UsersServiceClient,
     @Inject(TOKENS_OPTIONS_TOKEN) private readonly tokensOptions: TokensConfig,
     private readonly tokensService: TokensService,
   ) { }

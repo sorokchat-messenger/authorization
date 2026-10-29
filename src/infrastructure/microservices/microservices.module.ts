@@ -1,19 +1,16 @@
-import { DynamicModule, Module, Type } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { createClientModule, USERS_CLIENT } from '@sorokchat-messenger/microservices';
-import { type AllConfigs } from "../config/index.js";
+import { DynamicModule, Global, Module } from "@nestjs/common";
+import { createClientModule } from '@sorokchat-messenger/microservices';
+import { getUsersOptions } from "../options/index.js";
+import { USERS_SERVICE_PROVIDER } from "./providers/index.js";
 
-const ClientModule = createClientModule([{
-    ...USERS_CLIENT,
-    inject: [ConfigService],
-    urlFactory(config: ConfigService<AllConfigs>) {
-        const host = config.getOrThrow('users.host', { infer: true });
-        const port = config.getOrThrow('users.port', { infer: true });
-        return `${host}:${port}`;
-    }
-}]) as DynamicModule;
+const ClientModule = createClientModule([
+    getUsersOptions()
+]) as DynamicModule;
 
+@Global()
 @Module({
-    imports: [ClientModule]
+    imports: [ClientModule],
+    providers: [USERS_SERVICE_PROVIDER],
+    exports: [USERS_SERVICE_PROVIDER]
 })
 export class MicroservicesModule { }
