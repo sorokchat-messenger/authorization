@@ -1,5 +1,4 @@
 import { Catch, Logger, type RpcExceptionFilter } from "@nestjs/common";
-import { RpcException } from "@nestjs/microservices";
 import { UNKNOWN } from "@sorokchat-messenger/contracts";
 import { GrpcStatus } from "@sorokchat-messenger/microservices";
 import { Observable, throwError } from "rxjs";
@@ -13,11 +12,14 @@ export class GrpcPassthroughFilter implements RpcExceptionFilter {
         this.logger.debug(`Passthrough extracted code: ${code}`);
         this.logger.debug(`Passthrough extracted message: ${message}`);
         return throwError(
-            () =>
-                new RpcException({
+            () => (
+                {
                     code,
                     details: message,
-                }),
+                    message,
+                    status: code
+                }
+            ),
         );
     }
 
