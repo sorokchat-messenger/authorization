@@ -6,6 +6,8 @@ import {
   getConfigOptions,
   MicroservicesModule
 } from "../infrastructure/index.js";
+import { APP_FILTER } from "@nestjs/core";
+import { GrpcPassthroughFilter } from "./grpc-passthrough.filter.js";
 
 @Module({
   imports: [
@@ -14,5 +16,11 @@ import {
     AuthorizationModule,
     MicroservicesModule
   ],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: GrpcPassthroughFilter
+    }
+  ]
 })
 export class AppModule { }
